@@ -10,23 +10,30 @@
    idmap config * : range = 16777216-33554431
    passdb backend = tdbsam
 
-<%
 # this doesn't work, Bish.  Stop trying and move on.
 
 #idmap config <%= node[:realm][:netbios] %>:backend = ad
 #idmap config <%= node[:realm][:netbios] %>:default = yes
 #idmap config <%= node[:realm][:netbios] %>:schema mode = rfc2307
 #idmap config <%= node[:realm][:netbios] %>:range = 16777216-33554431
-idmap cache time = 1
+
+#idmap config <%= node[:realm][:netbios] %>:backend = rid
+#idmap config <%= node[:realm][:netbios] %>:default = yes
+
+idmap cache time = 10
 idmap negative cache time = 1
 winbind cache time = 1
-%>
+winbind expand groups = 3
+winbind nested groups = yes
+
    template homedir = /home/%U
    template shell = /bin/bash
    winbind use default domain = true
    winbind offline logon = true
 
-   kerberos method = secrets and keytab
+#   kerberos method = secrets and keytab
+   kerberos method = system keytab
+# dedicated keytab file = /etc/krb5.keytab
    winbind refresh tickets = yes
 
    server string = Samba Server Version %v
@@ -36,5 +43,8 @@ winbind cache time = 1
    # max 50KB per log file, then rotate
    max log size = 50
 
-   load printers = yes
+   load printers = no
    cups options = raw
+
+   # This stops an annoying message from appearing in logs
+   printcap name = /dev/null
