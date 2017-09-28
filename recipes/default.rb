@@ -6,6 +6,8 @@
 
 # cheat around the lack of crypto dbags
 include_recipe 'all-datacenter-attributes::realm'	# AD centralized settings
+include_recipe 'all-datacenter-attributes::ntp'		# centralized NTP settings
+include_recipe 'ntp'					# NTP server list
 
 package %w(PackageKit samba samba-client samba-common samba-winbind
 	samba-winbind-clients oddjob-mkhomedir dbus pam_krb5 krb5-workstation
@@ -15,13 +17,6 @@ case node[:realm][:auth]||''
 when 'sssd'
   include_recipe 'sssd'
 else
-  package %w(ntp)
-  template '/etc/ntp.conf'
-  service 'ntpd' do
-    supports :restart => true, :reload => true
-    action [ :enable, :start ]
-  end
-
   execute "authconfig" do
     command "authconfig " +
       "--enablewinbind --enablewinbindauth --enablewinbindoffline --disablecache " +

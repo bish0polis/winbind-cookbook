@@ -6,6 +6,8 @@ description	'Installs/Configures winbind'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 chef_version	'>= 12.1' if respond_to?(:chef_version)
 
-version		'0.1.0'
+version		'0.2.0'
 
 depends		'all-datacenter-attributes'
+depends		'ntp'
+
