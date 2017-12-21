@@ -17,6 +17,7 @@ case node[:realm][:auth]||''
 when 'sssd'
   include_recipe 'sssd'
 else
+  package %w(authconfig)
   execute "authconfig" do
     command "authconfig " +
       "--enablewinbind --enablewinbindauth --enablewinbindoffline --disablecache " +
