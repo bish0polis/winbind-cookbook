@@ -16,9 +16,12 @@
 
 [realms]
  <%= node[:realm][:realm_name].upcase %> = {
-<% node[:realm][:servers].each do |srv| %>
+<% node[:realm][:servers].each do |srv|
+     if srv != '*' %>
   kdc = <%= srv %>
-<% end unless node[:realm][:servers].none? %>
+<%
+   end
+ end unless node[:realm][:servers].none? %>
 #  admin_server = _kerberos._tcp.<%= node[:realm][:realm_name] %>
   admin_server = <%= node[:realm][:servers][0] %>
  }

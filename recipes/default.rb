@@ -53,7 +53,7 @@ else
 
   execute 'join ad in winbind' do
     command "net ads join -U #{node.run_state['realm_username']}%#{node.run_state['realm_password']} " +
-      "-S #{node[:realm][:servers][0]} " +
+      (node[:realm][:servers][0] != '*' ? "-S #{node[:realm][:servers][0]} " : '') +
       "createcomputer=#{node[:realm][:wbou]}"
 #    sensitive	true
     notifies :restart, 'service[winbind]', :immediately
