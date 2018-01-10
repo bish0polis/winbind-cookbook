@@ -9,6 +9,10 @@ include_recipe 'all-datacenter-attributes::realm'	# AD centralized settings
 include_recipe 'all-datacenter-attributes::ntp'		# centralized NTP settings
 include_recipe 'ntp'					# NTP server list
 
+package %w(chrony) do
+  action	:remove
+end
+
 package %w(PackageKit samba samba-client samba-common samba-winbind
 	samba-winbind-clients oddjob-mkhomedir dbus pam_krb5 krb5-workstation
 	adcli)

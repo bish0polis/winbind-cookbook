@@ -1,5 +1,8 @@
 ## change log for winbind
 
+# 0.4.0
+	bc - ensure chrony is removed after adding ntpd support.
+
 # 0.3.0
 	bc - ensure authconfig is installed where required.
 
