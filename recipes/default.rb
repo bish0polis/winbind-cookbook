@@ -42,8 +42,8 @@ else
   template '/etc/samba/smb.conf'
   template '/etc/security/pam_winbind.conf'
   template '/etc/krb5.conf'
-  
-  %w(messagebus oddjobd).each do |svc|
+
+  (node['platform_version'].split('.')[0].to_i >= 7 ? %w(dbus oddjobd) : %w(messagebus oddjobd)).each do |svc|
     service svc do 
       action [ :enable, :start ]
     end
@@ -59,7 +59,7 @@ else
     command "net ads join -U #{node.run_state['realm_username']}%#{node.run_state['realm_password']} " +
       "-S #{node[:realm][:servers][0]} " +
       "createcomputer=#{node[:realm][:wbou]}"
-#    sensitive	true
+    sensitive	true
     notifies :restart, 'service[winbind]', :immediately
     not_if " [ -f '/etc/krb5.keytab' ] && id #{node[:fqdn].split('.')[0]}$"
   end
@@ -68,7 +68,7 @@ else
   # between AD servers, and then try again.
   (node[:realm][:secgroups]||[]).each do |grp|
     execute "add #{node[:fqdn]} to group #{grp}@#{node[:realm][:realm_name]}" do
-#      sensitive	true
+      sensitive	true
       command "adcli add-member " + 
         "-D #{node[:realm][:realm_name]} " + 
         "-S #{node[:realm][:servers][0]} " + 
@@ -81,7 +81,7 @@ else
 
   (node[:realm][:srvtix]||[]).map(&:upcase).each do |srv|
     execute "get service ticket #{srv}/#{node[:fqdn]}@#{node[:realm][:realm_name].upcase}" do
-#      sensitive	true
+      sensitive	true
       command "net ads keytab " + 
         "add #{srv} " + 
         "-U #{node.run_state['realm_username']}%#{node.run_state['realm_password']}" + 
