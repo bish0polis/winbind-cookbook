@@ -9,6 +9,10 @@ include_recipe 'all-datacenter-attributes::realm'	# AD centralized settings
 include_recipe 'all-datacenter-attributes::ntp'		# centralized NTP settings
 include_recipe 'ntp'					# NTP server list
 
+package %w(chrony) do
+  action	:remove
+end
+
 package %w(PackageKit samba samba-client samba-common samba-winbind
 	samba-winbind-clients oddjob-mkhomedir dbus pam_krb5 krb5-workstation
 	adcli)
@@ -38,8 +42,8 @@ else
   template '/etc/samba/smb.conf'
   template '/etc/security/pam_winbind.conf'
   template '/etc/krb5.conf'
-  
-  %w(messagebus oddjobd).each do |svc|
+
+  (node['platform_version'].split('.')[0].to_i >= 7 ? %w(dbus oddjobd) : %w(messagebus oddjobd)).each do |svc|
     service svc do 
       action [ :enable, :start ]
     end
@@ -55,7 +59,7 @@ else
     command "net ads join -U #{node.run_state['realm_username']}%#{node.run_state['realm_password']} " +
       (node[:realm][:servers][0] != '*' ? "-S #{node[:realm][:servers][0]} " : '') +
       "createcomputer=#{node[:realm][:wbou]}"
-#    sensitive	true
+    sensitive	true
     notifies :restart, 'service[winbind]', :immediately
     not_if " [ -f '/etc/krb5.keytab' ] && id #{node[:fqdn].split('.')[0]}$"
   end
@@ -64,7 +68,7 @@ else
   # between AD servers, and then try again.
   (node[:realm][:secgroups]||[]).each do |grp|
     execute "add #{node[:fqdn]} to group #{grp}@#{node[:realm][:realm_name]}" do
-#      sensitive	true
+      sensitive	true
       command "adcli add-member " + 
         "-D #{node[:realm][:realm_name]} " + 
         "-S #{node[:realm][:servers][0]} " + 
@@ -77,7 +81,7 @@ else
 
   (node[:realm][:srvtix]||[]).map(&:upcase).each do |srv|
     execute "get service ticket #{srv}/#{node[:fqdn]}@#{node[:realm][:realm_name].upcase}" do
-#      sensitive	true
+      sensitive	true
       command "net ads keytab " + 
         "add #{srv} " + 
         "-U #{node.run_state['realm_username']}%#{node.run_state['realm_password']}" + 
