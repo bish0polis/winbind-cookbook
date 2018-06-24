@@ -1,6 +1,5 @@
 ## change log for winbind
 ## 0.4.0
-	bc - don't write * into krb.conf
 
 0.5.0
 	bc - change restart disco for RHEL7/dbus
@@ -9,6 +8,7 @@
 
 0.4.0
 	bc - ensure chrony is removed after adding ntpd support.
+	bc - don't write * into krb.conf
 
 0.3.0
 	bc - ensure authconfig is installed where required.
