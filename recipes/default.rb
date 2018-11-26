@@ -17,10 +17,6 @@ package %w(PackageKit samba samba-client samba-common samba-winbind
 	samba-winbind-clients oddjob-mkhomedir dbus pam_krb5 krb5-workstation
 	adcli)
 
-case node[:realm][:auth]||''
-when 'sssd'
-  include_recipe 'sssd'
-else
   package %w(authconfig)
   execute "authconfig" do
     command "authconfig " +
@@ -30,7 +26,7 @@ else
       "--smbrealm=#{node[:realm][:directory_name].upcase} " +
       "--smbservers=#{node[:realm][:servers].join(',')} " +
       "--winbindtemplatehomedir=/home/%U --winbindtemplateshell=/bin/bash " +
-      "--krb5realm=#{node[:realm][:directory_name].upcase} " +
+      "--enablekrb5 --krb5realm=#{node[:realm][:directory_name].upcase} " +
       "--disablekrb5kdcdns --disablekrb5realmdns " +
       "--enablelocauthorize --enablepamaccess  " +
       "--enablemkhomedir --updateall > /etc/.authconfig"
@@ -59,7 +55,7 @@ else
     command "net ads join -U #{node.run_state['realm_username']}%#{node.run_state['realm_password']} " +
       (node[:realm][:servers][0] != '*' ? "-S #{node[:realm][:servers][0]} " : '') +
       "createcomputer=#{node[:realm][:wbou]}"
-    sensitive	true
+#    sensitive	true
     notifies :restart, 'service[winbind]', :immediately
     not_if " [ -f '/etc/krb5.keytab' ] && id #{node[:fqdn].split('.')[0]}$"
   end
@@ -89,5 +85,4 @@ else
       not_if "klist -k | grep -qi '#{srv}/#{node[:fqdn]}@#{node[:realm][:realm_name].upcase}'"
     end
   end
-end
 

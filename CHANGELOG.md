@@ -1,5 +1,6 @@
 ## change log for winbind
-## 0.4.0
+0.6.0
+	bc - move the sssd/winbind decision out
 
 0.5.0
 	bc - change restart disco for RHEL7/dbus
