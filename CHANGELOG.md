@@ -1,4 +1,7 @@
 ## change log for winbind
+0.5.2
+	bc - DISABLE krb5 in security/pam_winbind.conf for now for RHEL6
+
 0.5.1
 	New SMB.conf format:
 	https://access.redhat.com/sites/default/files/attachments/rhel-ad-integration-deployment-guidelines-v1.5.pdf
