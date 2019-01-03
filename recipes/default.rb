@@ -13,6 +13,12 @@ package %w(chrony) do
   action	:remove
 end
 
+# as per
+# https://web.archive.org/web/20180927175218/https://access.redhat.com/discussions/903523
+# we'll need to work around an unpatched failure in the
+# oddjobd/mkhomedir/dbus/systemd fridge-art matrix.  Plan for this to
+# change the software list below (and explicitly kill oddjobd to fix
+# the behaviour)
 package %w(PackageKit samba samba-client samba-common samba-winbind
 	samba-winbind-clients oddjob-mkhomedir dbus pam_krb5 krb5-workstation
 	adcli)
@@ -22,20 +28,42 @@ when 'sssd'
   include_recipe 'sssd'
 else
   package %w(authconfig)
-  execute "authconfig" do
-    command "authconfig " +
-      "--enablewinbind --enablewinbindauth --enablewinbindoffline --disablecache " +
-      "--enablewinbindusedefaultdomain " +
-      "--smbsecurity=ads --smbworkgroup=#{node[:realm][:netbios]} " +
-      "--smbrealm=#{node[:realm][:directory_name].upcase} " +
-      "--smbservers=#{node[:realm][:servers].join(',')} " +
-      "--winbindtemplatehomedir=/home/%U --winbindtemplateshell=/bin/bash " +
-      "--krb5realm=#{node[:realm][:directory_name].upcase} " +
-      "--disablekrb5kdcdns --disablekrb5realmdns " +
-      "--enablelocauthorize --enablepamaccess  " +
-      "--enablemkhomedir --updateall > /etc/.authconfig"
-    creates '/etc/.authconfig'
+
+  authcmd="authconfig " +
+    "--enablewinbind --enablewinbindauth --enablewinbindoffline --disablecache " +
+    "--enablewinbindusedefaultdomain " +
+    "--smbsecurity=ads --smbworkgroup=#{node[:realm][:netbios]} " +
+    "--smbrealm=#{node[:realm][:directory_name].upcase} " +
+    "--smbservers=#{node[:realm][:servers].join(',')} " +
+    "--winbindtemplatehomedir=/home/%U --winbindtemplateshell=/bin/bash " +
+    "--krb5realm=#{node[:realm][:directory_name].upcase} " +
+    "--disablekrb5kdcdns --disablekrb5realmdns " +
+    "--enablelocauthorize --enablepamaccess  " +
+    "--smbidmapuid=#{node.read('realm', 'loidrng')||16777216}-#{node.read('realm', 'hiidrng')||33554431} " + 
+    "--smbidmapgid=#{node.read('realm', 'loidrng')||16777216}-#{node.read('realm', 'hiidrng')||33554431} " +
+    "--enablemkhomedir --updateall"
+
+  file '/etc/.authcmd' do
+    content authcmd
+    notifies :run, 'execute[authconfig]', :immediate
   end
+
+  execute "authconfig" do
+#    command	"#{authcmd} > /etc/.authconfig"
+    command	authcmd
+    action	:nothing
+#    creates	'/etc/.authconfig'
+  end
+
+  ['rm -f /var/lib/samba/winbindd_idmap.tdb', 'service winbind restart'].each do |s|
+    #'net cache flush'
+    execute s do
+      action	:nothing
+      subscribes  :run, 'template[/etc/samba/smb.conf]', :delayed
+      only_if " [ -f '/etc/krb5.keytab' ] && id #{node[:fqdn].split('.')[0]}$"
+    end
+  end
+
 
   # yes, we still need to patch up the krb5.conf to add in the KDC
   # addresses because authconfig is weak.  grr....
