@@ -9,15 +9,23 @@
 
    # template the rest ... later.
    security = ads
-   idmap config * : range = 16777216-33554431
+
+   idmap config <%= node[:realm][:netbios] %> :backend  = rid
+   idmap config <%= node[:realm][:netbios] %> :range   = <%= node.read('realm', 'loidrng')||16777216 %>-<%= node.read('realm', 'hiidrng')||33554431 %>
+
+#   idmap config * : range = 16777216-33554431
+   idmap config * : range = <%= (node.read('realm', 'hiidrng')||33554431)+1 %>-1999999999
+#   idmap config * : backend = rid
+#   idmap config * : base_rid = 0
    passdb backend = tdbsam
 
+#
 # this doesn't work, Bish.  Stop trying and move on.
 
 #idmap config <%= node[:realm][:netbios] %>:backend = ad
 #idmap config <%= node[:realm][:netbios] %>:default = yes
 #idmap config <%= node[:realm][:netbios] %>:schema mode = rfc2307
-#idmap config <%= node[:realm][:netbios] %>:range = 16777216-33554431
+#idmap config <%= node[:realm][:netbios] %>:range = <%= node.read('realm', 'loidrng')||16777216 %>-<%= node.read('realm', 'hiidrng')||33554431 %>
 
 #idmap config <%= node[:realm][:netbios] %>:backend = rid
 #idmap config <%= node[:realm][:netbios] %>:default = yes

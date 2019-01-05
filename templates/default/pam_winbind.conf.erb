@@ -3,8 +3,8 @@
 ;debug = no
 ;debug_state = no
 ;cached_login = no
-krb5_auth = yes
-krb5_ccache_type = FILE
+<%= node['platform_version'].split('.')[0].to_i < 7 ? ';' : '' %>krb5_auth = yes
+<%= node['platform_version'].split('.')[0].to_i < 7 ? ';' : '' %>krb5_ccache_type = FILE
 ;require_membership_of =
 ;warn_pwd_expire = 14
 ;silent = no
